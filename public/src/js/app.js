@@ -1,3 +1,7 @@
+if (!window.Promise) {
+    window.Promise = Promise;
+}
+
 var defferedPrompt = null;
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker
@@ -6,6 +10,7 @@ if ('serviceWorker' in navigator) {
             console.log('_________Service Worker Registered__________');
         });
 
+    // Add to home screen event
     window.addEventListener("beforeinstallprompt", function (event) {
         console.log('addEventListener("beforeinstallprompt" event', event);
         event.preventDefault();
