@@ -2,14 +2,15 @@ const logger = function (...details) {
     console.log('[Service Worker] ', ...details);
 };
 
-const CACHE_STATIC_NAME = 'static_v2';
-const CACHE_DYNAMIC_NAME = 'dynamic_v2';
+const CACHE_STATIC_NAME = 'static_v5';
+const CACHE_DYNAMIC_NAME = 'dynamic_v5  ';
 
 function isCacheableRequest(url) {
     url = url ? url.toLowerCase() : '';
     return (url.includes('https') || url.includes('http'));
 }
 
+// Is installed when version of Service Worker is changeded
 self.addEventListener("install", function (event) {
     logger('Installing Service Worker...', event);
 
@@ -60,6 +61,33 @@ self.addEventListener("activate", function (event) {
 
 
 /*
+// Network only Strategy
+// Default mechanism
+self.addEventListener("fetch", function (event) {
+    event.respondWith(
+        // Check if request with response already cached
+        fetch(event.request)
+            .catch(function (error) {
+                logger('Error while getting resource', error);
+            })
+    )
+});
+*/
+
+/*
+// Cache only Strategy  
+self.addEventListener("fetch", function (event) {
+    event.respondWith(
+        // Check if request with response already cached
+        caches.match(event.request)
+            .catch(function (error) {
+                logger('Error while getting cached resource', error);
+            })
+    )
+});
+*/
+
+/*
 // Cache with Network fallback strategy 
 self.addEventListener("fetch", function (event) {
     event.respondWith(
@@ -91,6 +119,7 @@ self.addEventListener("fetch", function (event) {
                         })
                         .catch(function (error) {
                             logger('Error while Dynamic Caching', error);
+                            // Custom fallback HTML Page
                             return caches.match('/offline.html');
                         })
                 }
@@ -101,33 +130,6 @@ self.addEventListener("fetch", function (event) {
     )
 });
 */
-
-/*
-// Cache only Strategy  
-self.addEventListener("fetch", function (event) {
-    event.respondWith(
-        // Check if request with response already cached
-        caches.match(event.request)
-            .catch(function (error) {
-                logger('Error while getting cached resource', error);
-            })
-    )
-});
-*/
-
-/*
-// Network only Strategy  
-self.addEventListener("fetch", function (event) {
-    event.respondWith(
-        // Check if request with response already cached
-        fetch(event.request)
-            .catch(function (error) {
-                logger('Error while getting resource', error);
-            })
-    )
-});
-*/
-
 
 // Network with Cache fallback strategy 
 self.addEventListener("fetch", function (event) {
@@ -150,13 +152,23 @@ self.addEventListener("fetch", function (event) {
                             logger('Error while Dynamic Caching', error);
                         });
                 } else {
-                    logger('Error while fetching resource', error);
+                    logger('Error while fetching resource 1', error);
                     return caches.match(event.request);
                 }
             })
             .catch(function (error) {
-                logger('Error while fetching resource', error);
-                return caches.match(event.request);
+                logger('Error while fetching resource 3', error);
+                return caches.match(event.request)
+                    .then(function (res) {
+                        if (res) {
+                            return res;
+                        } else {
+                            return caches.match('/offline.html')
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log('caches.match ERROR', error);
+                    });
             })
     )
 });
