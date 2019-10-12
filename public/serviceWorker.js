@@ -1,4 +1,4 @@
-var CACHE_STATIC_NAME = 'static-v13';
+var CACHE_STATIC_NAME = 'static-v2';
 var CACHE_DYNAMIC_NAME = 'dynamic-v2';
 var STATIC_FILES = [
   '/',
@@ -16,6 +16,32 @@ var STATIC_FILES = [
   'https://fonts.googleapis.com/icon?family=Material+Icons',
   'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css'
 ];
+
+function isInArray(string, array) {
+  var cachePath;
+  if (string.indexOf(self.origin) === 0) { // request targets domain where we serve the page from (i.e. NOT a CDN)
+    console.log('matched ', string);
+    cachePath = string.substring(self.origin.length); // take the part of the URL AFTER the domain (e.g. after localhost:8080)
+  } else {
+    cachePath = string; // store the full request (for CDNs)
+  }
+  return array.indexOf(cachePath) > -1;
+}
+
+
+// Can be used to Trim Cache storage
+function trimCache(cacheName, maxItems) {
+  caches.open(cacheName)
+    .then(function (cache) {
+      return cache.keys()
+        .then(function (keys) {
+          if (keys.length > maxItems) {
+            cache.delete(keys[0])
+              .then(trimCache(cacheName, maxItems))
+          }
+        })
+    })
+}
 
 self.addEventListener('install', function (event) {
   console.log('[Service Worker] Installing Service Worker ...', event);
@@ -58,7 +84,7 @@ self.addEventListener('fetch', function (event) {
             });
         })
     );
-  } else if (new RegExp('\\b' + STATIC_FILES.join('\\b|\\b') + '\\b').test(event.request.url)) {
+  } else if (isInArray(event.request.url, STATIC_FILES)) {
     event.respondWith(
       caches.match(event.request)
     );
@@ -73,6 +99,7 @@ self.addEventListener('fetch', function (event) {
               .then(function (res) {
                 return caches.open(CACHE_DYNAMIC_NAME)
                   .then(function (cache) {
+                    // trimCache(CACHE_DYNAMIC_NAME, 3);
                     cache.put(event.request.url, res.clone());
                     return res;
                   })
@@ -80,7 +107,9 @@ self.addEventListener('fetch', function (event) {
               .catch(function (err) {
                 return caches.open(CACHE_STATIC_NAME)
                   .then(function (cache) {
-                    if (event.request.url.indexOf('/help')) {
+                    // To display offline HTML page if requested resouse is of type HTML.
+                    // Can be changed to have different cache display for different files.
+                    if (event.request.headers.get('accept').includes('text/html')) {
                       return cache.match('/offline.html');
                     }
                   });
