@@ -74,7 +74,7 @@ function isInArray(string, array) {
 
 self.addEventListener('fetch', function (event) {
 
-  var url = 'https://pwagram-99adf.firebaseio.com/posts';
+  var url = 'https://pwa-gram-project-id.firebaseio.com/posts';
   if (event.request.url.indexOf(url) > -1) {
     event.respondWith(fetch(event.request)
       .then(function (res) {
@@ -189,7 +189,7 @@ self.addEventListener('sync', function(event) {
       readAllData('sync-posts')
         .then(function(data) {
           for (var dt of data) {
-            fetch('https://pwagram-99adf.firebaseio.com/posts.json', {
+            fetch('https://pwa-gram-project-id.firebaseio.com/posts.json', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

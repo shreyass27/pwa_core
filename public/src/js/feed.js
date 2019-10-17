@@ -97,7 +97,7 @@ function updateUI(data) {
   }
 }
 
-var url = 'https://pwagram-99adf.firebaseio.com/posts.json';
+var url = 'https://pwa-gram-project-id.firebaseio.com/posts.json';
 var networkDataReceived = false;
 
 fetch(url)
@@ -125,7 +125,7 @@ if ('indexedDB' in window) {
 }
 
 function sendData() {
-  fetch('https://pwagram-99adf.firebaseio.com/posts.json', {
+  fetch('https://pwa-gram-project-id.firebaseio.com/posts.json', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
