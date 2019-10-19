@@ -52,6 +52,51 @@ function displayNotification() {
   }
 }
 
+function configPushSub() {
+  if (!('serviceWorker' in navigator)) {
+    return
+  }
+  var serviceWorkerReg;
+  navigator.serviceWorker.ready
+    .then(function (swReg) {
+      serviceWorkerReg = swReg;
+      return swReg.pushManager.getSubscription();
+    })
+    .then(function (sub) {
+      if (!sub) {
+        // Create new Sub
+        var vapidPubKey = 'BG9r2fuBnFikE62zEDd4ru72jF3LZlOcnz1RIOUa9mZOGXBPCeDse9b3U3Lhw4OM8U4Sqkz8HpTUAkVI9E9dTsY';
+
+        var convertVpidPubKey = urlBase64ToUint8Array(vapidPubKey);
+        return serviceWorkerReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertVpidPubKey
+        });
+      } else {
+        // We have sub
+      }
+    })
+    .then(function (newSub) {
+      return fetch('https://pwa-gram-project-id.firebaseio.com/subscriptions.json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(newSub)
+      })
+    })
+    .then(function (res) {
+      if (res.ok) {
+        displayNotification();
+      }
+    })
+    .catch(function (error) {
+      console.log('Error in configPushSub promise chain', error);
+    })
+
+}
+
 function askForNofiPerm() {
   Notification.requestPermission(function (result) {
     console.log('User Choice', result);
@@ -59,7 +104,8 @@ function askForNofiPerm() {
     if (result !== 'granted') {
       console.log('User Permission denied', result);
     } else {
-      displayNotification();
+      configPushSub();
+      // displayNotification();
       for (var i = 0; i < enableNotificationButton.length; i++) {
         enableNotificationButton[i].style.display = 'none';
       }
@@ -73,3 +119,4 @@ if ('Notification' in window) {
     enableNotificationButton[i].addEventListener('click', askForNofiPerm)
   }
 }
+

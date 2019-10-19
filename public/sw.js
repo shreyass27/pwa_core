@@ -223,17 +223,66 @@ self.addEventListener('sync', function (event) {
 
 
 self.addEventListener('notificationclick', function (event) {
-  var notificaition = event.notificaition;
+  var notification = event.notification;
   var action = event.action;
 
   if (action === 'confirm') {
-    console.log('[Service Worker] Confirm was selected', notificaition);
+    console.log('[Service Worker] Confirm was selected', notification);
+    notification.close();
   } else {
-    console.log(`[Service Worker] ${action} was selected`, notificaition)
+    console.log(`[Service Worker] ${action} was selected`, notification);
+    event.waitUntil(
+      clients.matchAll()
+        .then(function (clis) {
+          var client = clis.find(function (c) {
+            return c.visibilityState === 'visible'
+          });
+
+          if (client !== undefined) {
+            client.navigate(notification.data.url);
+            client.focus();
+          } else {
+            clients.openWindow(notification.data.url);
+          }
+          notification.close();
+        })
+    )
   }
-  notificaition.close();
 });
 
 self.addEventListener('notificationclose', function (event) {
   console.log('[Service Worker] Notification was closed', event);
+});
+
+self.addEventListener('push', function (event) {
+  console.log('[Service Worker] Push Recevied', event);
+  var data = { title: 'New', content: 'Something Happened!', openUrl: '/' };
+  if (event.data) {
+    data = JSON.parse(event.data.text());
+  }
+  // Notification options 
+  var options = {
+    body: data.content,
+    icon: '/src/images/icons/app-icon-96x96.png',
+    image: '/src/images/sf-boat.jpg',
+    dir: 'ltr',
+    lang: 'en-US',
+    vibrate: [100, 500, 200],
+    badge: '/src/images/icons/app-icon-96x96.png',
+    // Set different tags for different types of nitfications.
+    tag: 'confirm-notification',
+    // To renotify in Notification with same tag is stacked again.
+    renotify: true,
+    actions: [
+      { action: 'confirm', title: 'Okay', icon: '/src/images/icons/app-icon-96x96.png' },
+      { action: 'cancel', title: 'Cancel', icon: '/src/images/icons/app-icon-96x96.png' }
+    ],
+    data: {
+      url: data.openUrl
+    }
+  };
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  )
+
 });
