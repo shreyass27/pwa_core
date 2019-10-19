@@ -220,3 +220,20 @@ self.addEventListener('sync', function (event) {
     );
   }
 });
+
+
+self.addEventListener('notificationclick', function (event) {
+  var notificaition = event.notificaition;
+  var action = event.action;
+
+  if (action === 'confirm') {
+    console.log('[Service Worker] Confirm was selected', notificaition);
+  } else {
+    console.log(`[Service Worker] ${action} was selected`, notificaition)
+  }
+  notificaition.close();
+});
+
+self.addEventListener('notificationclose', function (event) {
+  console.log('[Service Worker] Notification was closed', event);
+});
