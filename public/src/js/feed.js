@@ -9,12 +9,12 @@ var locationInput = document.querySelector('#location');
 function openCreatePostModal() {
   // createPostArea.style.display = 'block';
   // setTimeout(function() {
-    createPostArea.style.transform = 'translateY(0)';
+  createPostArea.style.transform = 'translateY(0)';
   // }, 1);
   if (deferredPrompt) {
     deferredPrompt.prompt();
 
-    deferredPrompt.userChoice.then(function(choiceResult) {
+    deferredPrompt.userChoice.then(function (choiceResult) {
       console.log(choiceResult.outcome);
 
       if (choiceResult.outcome === 'dismissed') {
@@ -51,7 +51,7 @@ function onSaveButtonClicked(event) {
   console.log('clicked');
   if ('caches' in window) {
     caches.open('user-requested')
-      .then(function(cache) {
+      .then(function (cache) {
         cache.add('https://httpbin.org/get');
         cache.add('/src/images/sf-boat.jpg');
       });
@@ -59,7 +59,7 @@ function onSaveButtonClicked(event) {
 }
 
 function clearCards() {
-  while(sharedMomentsArea.hasChildNodes()) {
+  while (sharedMomentsArea.hasChildNodes()) {
     sharedMomentsArea.removeChild(sharedMomentsArea.lastChild);
   }
 }
@@ -101,10 +101,10 @@ var url = 'https://pwa-gram-project-id.firebaseio.com/posts.json';
 var networkDataReceived = false;
 
 fetch(url)
-  .then(function(res) {
+  .then(function (res) {
     return res.json();
   })
-  .then(function(data) {
+  .then(function (data) {
     networkDataReceived = true;
     console.log('From web', data);
     var dataArray = [];
@@ -116,7 +116,7 @@ fetch(url)
 
 if ('indexedDB' in window) {
   readAllData('posts')
-    .then(function(data) {
+    .then(function (data) {
       if (!networkDataReceived) {
         console.log('From cache', data);
         updateUI(data);
@@ -125,7 +125,7 @@ if ('indexedDB' in window) {
 }
 
 function sendData() {
-  fetch('https://pwa-gram-project-id.firebaseio.com/posts.json', {
+  fetch('https://us-central1-pwa-gram-project-id.cloudfunctions.net/storePostData', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -138,13 +138,13 @@ function sendData() {
       image: 'https://firebasestorage.googleapis.com/v0/b/pwagram-99adf.appspot.com/o/sf-boat.jpg?alt=media&token=19f4770c-fc8c-4882-92f1-62000ff06f16'
     })
   })
-    .then(function(res) {
+    .then(function (res) {
       console.log('Sent data', res);
       updateUI();
     })
 }
 
-form.addEventListener('submit', function(event) {
+form.addEventListener('submit', function (event) {
   event.preventDefault();
 
   if (titleInput.value.trim() === '' || locationInput.value.trim() === '') {
@@ -156,22 +156,22 @@ form.addEventListener('submit', function(event) {
 
   if ('serviceWorker' in navigator && 'SyncManager' in window) {
     navigator.serviceWorker.ready
-      .then(function(sw) {
+      .then(function (sw) {
         var post = {
           id: new Date().toISOString(),
           title: titleInput.value,
           location: locationInput.value
         };
         writeData('sync-posts', post)
-          .then(function() {
+          .then(function () {
             return sw.sync.register('sync-new-posts');
           })
-          .then(function() {
+          .then(function () {
             var snackbarContainer = document.querySelector('#confirmation-toast');
-            var data = {message: 'Your Post was saved for syncing!'};
+            var data = { message: 'Your Post was saved for syncing!' };
             snackbarContainer.MaterialSnackbar.showSnackbar(data);
           })
-          .catch(function(err) {
+          .catch(function (err) {
             console.log(err);
           });
       });

@@ -1,8 +1,8 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/utility.js');
 
-var CACHE_STATIC_NAME = 'static-v23';
-var CACHE_DYNAMIC_NAME = 'dynamic-v2';
+var CACHE_STATIC_NAME = 'static-v5';
+var CACHE_DYNAMIC_NAME = 'dynamic-v5';
 var STATIC_FILES = [
   '/',
   '/index.html',
@@ -181,15 +181,15 @@ self.addEventListener('fetch', function (event) {
 //   );
 // });
 
-self.addEventListener('sync', function(event) {
+self.addEventListener('sync', function (event) {
   console.log('[Service Worker] Background syncing', event);
   if (event.tag === 'sync-new-posts') {
     console.log('[Service Worker] Syncing new Posts');
     event.waitUntil(
       readAllData('sync-posts')
-        .then(function(data) {
+        .then(function (data) {
           for (var dt of data) {
-            fetch('https://pwa-gram-project-id.firebaseio.com/posts.json', {
+            fetch('https://us-central1-pwa-gram-project-id.cloudfunctions.net/storePostData', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -202,13 +202,16 @@ self.addEventListener('sync', function(event) {
                 image: 'https://firebasestorage.googleapis.com/v0/b/pwagram-99adf.appspot.com/o/sf-boat.jpg?alt=media&token=19f4770c-fc8c-4882-92f1-62000ff06f16'
               })
             })
-              .then(function(res) {
-                console.log('Sent data', res);
+              .then(function (res) {
                 if (res.ok) {
-                  deleteItemFromData('sync-posts', dt.id); // Isn't working correctly!
+                  return res.json()
                 }
               })
-              .catch(function(err) {
+              .then(function (data) {
+                console.log('Sent data', data);
+                deleteItemFromData('sync-posts', data.id); // Isn't working correctly!
+              })
+              .catch(function (err) {
                 console.log('Error while sending data', err);
               });
           }
