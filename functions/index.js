@@ -163,27 +163,30 @@ exports.storePostData = functions.https.onRequest(function (request, response) {
                 },
                 function (err, uploadedFile) {
                     if (!err) {
+                        const objectPush = {
+                            id: fields.id,
+                            title: fields.title,
+                            location: fields.location,
+                            rawLocationLat: fields.rawLocationLat,
+                            rawLocationLong: fields.rawLocationLong,
+                            image:
+                                "https://firebasestorage.googleapis.com/v0/b/" +
+                                bucket.name +
+                                "/o/" +
+                                encodeURIComponent(uploadedFile.name) +
+                                "?alt=media&token=" +
+                                uuid
+                        };
                         admin
                             .database()
                             .ref("posts")
-                            .push({
-                                id: fields.id,
-                                title: fields.title,
-                                location: fields.location,
-                                image:
-                                    "https://firebasestorage.googleapis.com/v0/b/" +
-                                    bucket.name +
-                                    "/o/" +
-                                    encodeURIComponent(uploadedFile.name) +
-                                    "?alt=media&token=" +
-                                    uuid
-                            })
+                            .push(objectPush)
                             .then(function () {
                                 console.log('Post posted to DB');
                                 webPush.setVapidDetails('mailto:shreyastroy369@outlook.com',
                                     'BG9r2fuBnFikE62zEDd4ru72jF3LZlOcnz1RIOUa9mZOGXBPCeDse9b3U3Lhw4OM8U4Sqkz8HpTUAkVI9E9dTsY',
                                     'vgBZIIgiPZSoEciE8eFVY4tPEHE81wpyG66PRYHS7tI');
-                                    
+
                                 console.log('webPush Id Set');
                                 return admin
                                     .database()
@@ -216,7 +219,7 @@ exports.storePostData = functions.https.onRequest(function (request, response) {
                                 console.log('Notification Sent');
                                 response
                                     .status(201)
-                                    .json({ message: "Data stored", id: fields.id });
+                                    .json({ message: "Data stored", ...objectPush });
                                 console.log('Response Sent');
                             })
                             .catch(function (err) {

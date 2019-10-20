@@ -14,7 +14,40 @@ var imagePickerArea = document.querySelector('#pick-image');
 var picture;
 var locationBtn = document.querySelector('#location-btn');
 var locationLoader = document.querySelector('#location-loader');
+var fetchedLocation;
 
+locationBtn.addEventListener('click', function (event) {
+  if (!('geolocation' in navigator)) {
+    return;
+  }
+  locationBtn.style.display = 'none';
+  locationLoader.style.display = 'block';
+  navigator.geolocation.getCurrentPosition(function (position) {
+    locationBtn.style.display = 'inline';
+    locationLoader.style.display = 'none';
+    console.log('locationBtn.addEventListener position', position);
+    fetchedLocation = {
+      lat: position.coords.latitude,
+      long: position.coords.longitude
+    };
+    locationInput.value = 'In Pune';
+    document.querySelector('#manual-location').classList.add('is-focused');
+  }, function (err) {
+    console.log('Error in Geolocation', err);
+    locationBtn.style.display = 'inline';
+    locationLoader.style.display = 'none';
+    alert('Not able to fetch location, please enter manually');
+    fetchedLocation = { lat: 0, long: 0 };
+  }, {
+    timeout: 7000
+  })
+});
+
+function initializeLocation() {
+  if (!('geolocation' in navigator)) {
+    locationBtn.style.display = 'none';
+  }
+}
 
 function initializeMedia() {
   if (!('mediaDevices' in navigator)) {
@@ -69,8 +102,11 @@ imagePickerArea.addEventListener('change', function (event) {
 function openCreatePostModal() {
   // createPostArea.style.display = 'block';
   // setTimeout(function() {
-  createPostArea.style.transform = 'translateY(0)';
+  setTimeout(function () {
+    createPostArea.style.transform = 'translateY(0)';
+  }, 10)
   initializeMedia();
+  initializeLocation();
   // }, 1);
   if (deferredPrompt) {
     deferredPrompt.prompt();
@@ -99,11 +135,22 @@ function openCreatePostModal() {
 }
 
 function closeCreatePostModal() {
-  createPostArea.style.transform = 'translateY(100vh)';
   imagePickerArea.style.display = 'none';
   videoPlayer.style.display = 'none';
   canvasElement.style.display = 'none';
-  // createPostArea.style.display = 'none';
+  locationBtn.style.display = 'inline';
+  captureButton.style.display = 'inline';
+  locationLoader.style.display = 'none';
+
+  if (videoPlayer.srcObject) {
+    videoPlayer.srcObject.getVideoTracks().forEach(function (track) {
+      track.stop();
+    });
+  }
+
+  setTimeout(function () {
+    createPostArea.style.transform = 'translateY(100vh)';
+  }, 10)
 }
 
 shareImageButton.addEventListener('click', openCreatePostModal);
@@ -195,7 +242,11 @@ function sendData() {
   postData.append('id', id);
   postData.append('title', titleInput.value);
   postData.append('location', locationInput.value);
-  postData.append('file', picture, id + '.png');
+  postData.append('rawLocationLat', fetchedLocation.lat);
+  postData.append('rawLocationLong', fetchedLocation.long);
+  if (picture) {
+    postData.append('file', picture, id + '.png');
+  }
 
   fetch('https://us-central1-pwa-gram-project-id.cloudfunctions.net/storePostData', {
     method: 'POST',
@@ -224,7 +275,8 @@ form.addEventListener('submit', function (event) {
           id: new Date().toISOString(),
           title: titleInput.value,
           location: locationInput.value,
-          picture: picture
+          picture: picture,
+          rawLocation: fetchedLocation
         };
         writeData('sync-posts', post)
           .then(function () {
