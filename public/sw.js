@@ -1,14 +1,15 @@
 importScripts('/src/js/idb.js');
 importScripts('/src/js/utility.js');
 
-var CACHE_STATIC_NAME = 'static-v5';
-var CACHE_DYNAMIC_NAME = 'dynamic-v5';
+var CACHE_STATIC_NAME = 'static-v11';
+var CACHE_DYNAMIC_NAME = 'dynamic-v11';
 var STATIC_FILES = [
   '/',
   '/index.html',
   '/offline.html',
   '/src/js/app.js',
   '/src/js/feed.js',
+  '/src/js/utility.js',
   '/src/js/idb.js',
   '/src/js/promise.js',
   '/src/js/fetch.js',
@@ -189,18 +190,15 @@ self.addEventListener('sync', function (event) {
       readAllData('sync-posts')
         .then(function (data) {
           for (var dt of data) {
+            var postData = new FormData();
+            postData.append('id', dt.id);
+            postData.append('title', dt.title);
+            postData.append('location', dt.location);
+            postData.append('file', dt.picture, dt.id + '.png');
+
             fetch('https://us-central1-pwa-gram-project-id.cloudfunctions.net/storePostData', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                id: dt.id,
-                title: dt.title,
-                location: dt.location,
-                image: 'https://firebasestorage.googleapis.com/v0/b/pwagram-99adf.appspot.com/o/sf-boat.jpg?alt=media&token=19f4770c-fc8c-4882-92f1-62000ff06f16'
-              })
+              body: postData
             })
               .then(function (res) {
                 if (res.ok) {
